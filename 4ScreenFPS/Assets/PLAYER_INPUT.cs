@@ -171,8 +171,8 @@ public struct PlayerInput
 
 public class PLAYER_INPUT : MonoBehaviour
 {
-    [SerializeField] PlayerIndex playerIndex = PlayerIndex.One;
-    internal GamePadState playerState;
+    PlayerIndex playerIndex;
+    GamePadState playerState;
     GamePadState playerState_Previous;
 
     internal PlayerInput playerInput;
@@ -182,6 +182,8 @@ public class PLAYER_INPUT : MonoBehaviour
     {
         playerInput = new PlayerInput();
         playerState = new GamePadState();
+
+        playerIndex = gameObject.GetComponent<PlayerController>().playerIndex;
     }
 
     internal void SetPlayerIndex( PlayerIndex _index )
@@ -189,17 +191,131 @@ public class PLAYER_INPUT : MonoBehaviour
         playerIndex = _index;
     }
 
+    internal PlayerIndex GetPlayerIndex()
+    {
+        return playerIndex;
+    }
+
     float f_InputMinimum = 0.01f;
     Vector2 v2_DPad;
+    Vector2 v2_DPad_Old;
 
     // Update is called once per frame
     internal void InputUpdate()
     {
         playerState = GamePad.GetState( playerIndex );
 
-        #region Analog sticks
-        // Horiz
-        // if(playerState.ThumbSticks.Left.X >=)
+        #region Analog Sticks
+        // Move Horizontally
+        if (playerState.ThumbSticks.Left.X >= f_InputMinimum || playerState.ThumbSticks.Left.X <= -f_InputMinimum) playerInput.xDir = playerState.ThumbSticks.Left.X;
+        else playerInput.xDir = 0f;
+
+        // Move Forward / Backward
+        if (playerState.ThumbSticks.Left.Y >= f_InputMinimum || playerState.ThumbSticks.Left.Y <= -f_InputMinimum) playerInput.zDir = playerState.ThumbSticks.Left.Y;
+        else playerInput.zDir = 0f;
+
+        // Look Up / Down
+        if (playerState.ThumbSticks.Right.X >= f_InputMinimum || playerState.ThumbSticks.Right.X <= -f_InputMinimum) playerInput.LookHoriz = playerState.ThumbSticks.Right.X;
+        else playerInput.LookHoriz = 0f;
+
+        // Look Up / Down
+        if (playerState.ThumbSticks.Right.Y >= f_InputMinimum || playerState.ThumbSticks.Right.Y <= -f_InputMinimum) playerInput.LookVert = playerState.ThumbSticks.Right.Y;
+        else playerInput.LookVert = 0f;
+        #endregion
+
+        #region DPad Bools and Vector2
+        // Reset values
+        playerInput.DPad_Pressed_Left = false;
+        playerInput.DPad_Pressed_Right = false;
+        playerInput.DPad_Pressed_Up = false;
+        playerInput.DPad_Pressed_Up = false;
+        v2_DPad = new Vector2();
+
+        if (playerState.DPad.Left == ButtonState.Pressed)
+        {
+            if (v2_DPad_Old.x >= 0f) playerInput.DPad_Pressed_Left = true;
+
+            v2_DPad.x = -1f;
+        }
+        else if (playerState.DPad.Right == ButtonState.Pressed)
+        {
+            if (v2_DPad_Old.x <= 0f) playerInput.DPad_Pressed_Right = true;
+
+            v2_DPad.x = 1f;
+        }
+
+        if (playerState.DPad.Up == ButtonState.Pressed)
+        {
+            if (v2_DPad_Old.y <= 0f) playerInput.DPad_Pressed_Up = true;
+
+            v2_DPad.y = 1f;
+        }
+        else if (playerState.DPad.Down == ButtonState.Pressed)
+        {
+            if (v2_DPad_Old.y >= 0f) playerInput.DPad_Pressed_Down = true;
+
+            v2_DPad.y = -1f;
+        }
+
+        // Normalize
+        v2_DPad.Normalize();
+
+        // Set value
+        playerInput.DPadVector = v2_DPad;
+
+        // Store old value for evaluation
+        v2_DPad_Old = v2_DPad;
+        #endregion
+
+        #region A/B/X/Y
+        playerInput.Button_A = ButtonState.Released;
+        playerInput.Button_B = ButtonState.Released;
+        playerInput.Button_X = ButtonState.Released;
+        playerInput.Button_Y = ButtonState.Released;
+        if (playerState.Buttons.A == ButtonState.Pressed)
+        {
+            playerInput.Button_A = ButtonState.Pressed;
+        }
+        if (playerState.Buttons.B == ButtonState.Pressed)
+        {
+            playerInput.Button_B = ButtonState.Pressed;
+        }
+        if (playerState.Buttons.X == ButtonState.Pressed)
+        {
+            playerInput.Button_X = ButtonState.Pressed;
+        }
+        if (playerState.Buttons.Y == ButtonState.Pressed)
+        {
+            playerInput.Button_Y = ButtonState.Pressed;
+        }
+        #endregion
+
+        #region Trigger Input
+        if (playerState.Triggers.Left > 0.4f) playerInput.Trigger_Left = ButtonState.Pressed;
+        else playerInput.Trigger_Left = ButtonState.Released;
+
+        if (playerState.Triggers.Right > 0.4f) playerInput.Trigger_Right = ButtonState.Pressed;
+        else playerInput.Trigger_Right = ButtonState.Released;
+        #endregion
+
+        #region Bumpers
+        if (playerState.Buttons.LeftShoulder == ButtonState.Pressed)
+            playerInput.Bumper_Left = ButtonState.Pressed;
+        else
+            playerInput.Bumper_Left = ButtonState.Released;
+
+        if (playerState.Buttons.RightShoulder == ButtonState.Pressed)
+            playerInput.Bumper_Right = ButtonState.Pressed;
+        else
+            playerInput.Bumper_Right = ButtonState.Released;
+        #endregion
+
+        #region Start & Select
+        if (playerState.Buttons.Start == ButtonState.Pressed) playerInput.Button_Start = ButtonState.Pressed;
+        else playerInput.Button_Start = ButtonState.Released;
+
+        if (playerState.Buttons.Back == ButtonState.Pressed) playerInput.Button_Select = ButtonState.Pressed;
+        else playerInput.Button_Select = ButtonState.Released;
         #endregion
 
         playerState_Previous = playerState;

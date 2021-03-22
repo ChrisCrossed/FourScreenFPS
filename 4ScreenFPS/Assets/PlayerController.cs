@@ -5,12 +5,12 @@ using UnityEngine;
 
 public class PlayerController : PLAYER_INPUT
 {
-    
+    [SerializeField] XInputDotNetPure.PlayerIndex playerIndex;
 
     // Start is called before the first frame update
     void Start()
     {
-        InputStart();
+        SetPlayerIndex( playerIndex );
     }
 
     // Update is called once per frame
@@ -18,9 +18,9 @@ public class PlayerController : PLAYER_INPUT
     {
         InputUpdate();
 
-        if( playerState.Buttons.A == XInputDotNetPure.ButtonState.Pressed )
+        if( playerInput.Button_A == XInputDotNetPure.ButtonState.Pressed )
         {
-            print("A Held");
+            print( playerInput.Button_A );
         }
     }
 }
